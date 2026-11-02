@@ -1,0 +1,27 @@
+# secrets – never commit
+ci/.env
+ci/keys/
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+!ci/.env.example
+
+# pipeline outputs
+reports/*
+!reports/.gitkeep
+app/
+*.jsonl
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store

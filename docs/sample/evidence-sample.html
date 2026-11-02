@@ -1,0 +1,70 @@
+﻿<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>SecureShip evidence Â· build #12</title><style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#14181f;--muted:#5d6675;--line:#e3e6eb;--ok:#127a46;--okbg:#e5f5ec;
+--bad:#b42318;--badbg:#fdecea;--warn:#9a5b00;--warnbg:#fff4e0;--info:#1d4ed8;--infobg:#e8efff;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1217;--card:#171b22;--ink:#e7eaf0;--muted:#98a2b3;--line:#2a303a;
+--ok:#4ade80;--okbg:#10291b;--bad:#f87171;--badbg:#2d1414;--warn:#fbbf24;--warnbg:#2b2210;--info:#93b4ff;--infobg:#141f38}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 60px}
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+h1{font-size:22px;margin:0}h2{font-size:15px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sub{color:var(--muted);font-size:13px}
+.verdict{border-radius:14px;padding:18px 22px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;margin-bottom:18px;border:1px solid var(--line);background:var(--card)}
+.verdict .big{font-size:26px;font-weight:700}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:600;font-size:12px;letter-spacing:.03em}
+.PASS,.OK,.DEPLOYED,.SUCCESS{background:var(--okbg);color:var(--ok)}
+.FAIL,.ERROR,.FAILED,.FAILURE,.ROLLBACK_FAILED,.BLOCKED_BY_GATE{background:var(--badbg);color:var(--bad)}
+.WARN,.ROLLED_BACK,.UNSTABLE,.SKIPPED,.NOT_RUN,.NOT_REACHED,.MISSING{background:var(--warnbg);color:var(--warn)}
+.INFO,.SKIP{background:var(--infobg);color:var(--info)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;overflow-x:auto}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}.kv dt{color:var(--muted)}.kv dd{margin:0;word-break:break-all}
+.stat{font-size:28px;font-weight:700}.mono{font-family:var(--mono);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.sev{display:inline-block;min-width:68px;text-align:center}
+.CRITICAL{background:var(--badbg);color:var(--bad)}.HIGH{background:var(--warnbg);color:var(--warn)}
+.MEDIUM{background:var(--infobg);color:var(--info)}.LOW,.UNKNOWN{background:var(--line);color:var(--muted)}
+.bars{display:flex;gap:10px;flex-wrap:wrap}.bars div{flex:1;min-width:70px;border-radius:10px;padding:8px 10px}
+.bars b{display:block;font-size:22px}.muted{color:var(--muted)}footer{margin-top:28px;color:var(--muted);font-size:12px}
+a{color:var(--info)}
+</style></head>
+<body><div class="wrap">
+<header><div><h1>SecureShip Â· Release evidence <span class="pill WARN">SAMPLE Â· generated from test fixtures</span></h1>
+<div class="sub">ShopPilot Â· build #12 Â· commit <span class="mono">a1b2c3d4e5f6</span> Â· generated 2026-11-02T14:14:32+00:00</div></div>
+<div class="sub">schema secureship/evidence/v1</div></header>
+
+<section class="verdict">
+  <div><div class="sub">Security gate</div><div class="big"><span class="pill PASS">PASS</span></div></div>
+  <div><div class="sub">Deployment</div><div class="big"><span class="pill ROLLED_BACK">ROLLED_BACK</span></div></div>
+  <div><div class="sub">Pipeline result</div><div class="big"><span class="pill FAILURE">FAILURE</span></div></div>
+  <div><div class="sub">Residual risk</div><div class="big">3.6<span class="sub"> /100 LOW</span></div></div>
+</section>
+<div class="grid">
+ <section class="card"><h2>Build</h2><dl class="kv"><dt>Build</dt><dd>12</dd><dt>Job</dt><dd>SecureShip</dd><dt>Started</dt><dd>2026-11-02T10:15:00Z</dd><dt>Trigger</dt><dd>SCM change</dd><dt>Jenkins</dt><dd>â€“</dd></dl></section>
+ <section class="card"><h2>Source</h2><dl class="kv"><dt>Repository</dt><dd>https://github.com/&lt;you&gt;/ShopPilot.git</dd><dt>Branch</dt><dd>main</dd><dt>Commit</dt><dd><span class="mono">a1b2c3d4e5f6</span></dd><dt>Message</dt><dd>Add purchase return flow</dd><dt>Author</dt><dd>Hrushika</dd></dl></section>
+ <section class="card"><h2>Images</h2><dl class="kv"><dt>Tag</dt><dd><span class="mono">12-a1b2c3d4</span></dd><dt>backend</dt><dd><span class="mono">sha256:4f9c2e7d1a00</span> Â· user 10001 Â· 1640 MB</dd><dt>frontend</dt><dd><span class="mono">sha256:9ab01c55e2d7</span> Â· user 101 Â· 52 MB</dd></dl></section>
+</div><section class="card"><h2>Policy checks</h2><table><tr><th>Result</th><th>Check</th><th>Detail</th></tr><tr><td><span class="pill PASS">PASS</span></td><td>Automated tests</td><td>47/48 passed, 1 skipped</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Line coverage</td><td>73.4% (no minimum set)</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>SonarQube quality gate</td><td>Quality gate passed</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Secret scanning</td><td>No secrets (0 accepted)</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Image vulnerabilities (backend)</td><td>Within policy [C:0, H:1, M:1, L:1]</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Image vulnerabilities (frontend)</td><td>Within policy [C:0, H:0, M:1, L:0]</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Dockerfile misconfiguration</td><td>0 non-blocking finding(s)</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Image hardening (backend)</td><td>non-root user &#x27;10001&#x27;, 1640 MB</td></tr><tr><td><span class="pill PASS">PASS</span></td><td>Image hardening (frontend)</td><td>non-root user &#x27;101&#x27;, 52 MB</td></tr></table></section>
+<div class="grid">
+ <section class="card"><h2>Tests</h2>
+   <div class="stat">47<span class="sub"> / 48 passed</span></div>
+   <div class="sub">0 failed Â· 0 errors Â· 1 skipped Â· coverage 73.4%</div>
+
+ </section>
+ <section class="card"><h2>SonarQube</h2><div class="stat"><span class="pill OK">OK</span></div>
+   <div class="sub"><a href='http://localhost:9000/dashboard?id=shoppilot'>dashboard</a></div>
+   <table><tr><td>new_reliability_rating</td><td><span class="pill OK">OK</span></td><td class='mono'>1 GT 1</td></tr><tr><td>new_security_rating</td><td><span class="pill OK">OK</span></td><td class='mono'>1 GT 1</td></tr></table>
+ </section>
+ <section class="card"><h2>DAST (OWASP ZAP baseline)</h2>
+   <p class='muted'>Not run (runs only after a healthy deployment).</p>
+ </section>
+</div><section class="card"><h2>Vulnerabilities Â· backend <span class="sub">debian 12.7</span></h2>
+<div class="bars"><div class='CRITICAL'><b>0</b>Critical <span class='sub'>(0 fixable)</span></div><div class='HIGH'><b>1</b>High <span class='sub'>(0 fixable)</span></div><div class='MEDIUM'><b>1</b>Medium <span class='sub'>(1 fixable)</span></div><div class='LOW'><b>1</b>Low <span class='sub'>(0 fixable)</span></div></div>
+<table style='margin-top:12px'><tr><th>Severity</th><th>ID</th><th>Package</th><th>Installed</th><th>Fixed in</th><th>Title</th></tr><tr><td><span class='pill sev HIGH'>HIGH</span></td><td class='mono'><a href="https://avd.aquasec.com/nvd/cve-2025-0001">CVE-2025-0001</a></td><td>libexample</td><td class='mono'>1.0</td><td class='mono'>â€”</td><td>CVE-2025-0001 title</td></tr><tr><td><span class='pill sev MEDIUM'>MEDIUM</span></td><td class='mono'><a href="https://avd.aquasec.com/nvd/cve-2025-0002">CVE-2025-0002</a></td><td>libxml2</td><td class='mono'>1.0</td><td class='mono'>2.9.14+dfsg-1.4</td><td>CVE-2025-0002 title</td></tr><tr><td><span class='pill sev LOW'>LOW</span></td><td class='mono'><a href="https://avd.aquasec.com/nvd/cve-2025-0003">CVE-2025-0003</a></td><td>tar</td><td class='mono'>1.0</td><td class='mono'>â€”</td><td>CVE-2025-0003 title</td></tr></table>
+</section><section class="card"><h2>Vulnerabilities Â· frontend <span class="sub">debian 12.7</span></h2>
+<div class="bars"><div class='CRITICAL'><b>0</b>Critical <span class='sub'>(0 fixable)</span></div><div class='HIGH'><b>0</b>High <span class='sub'>(0 fixable)</span></div><div class='MEDIUM'><b>1</b>Medium <span class='sub'>(0 fixable)</span></div><div class='LOW'><b>0</b>Low <span class='sub'>(0 fixable)</span></div></div>
+<table style='margin-top:12px'><tr><th>Severity</th><th>ID</th><th>Package</th><th>Installed</th><th>Fixed in</th><th>Title</th></tr><tr><td><span class='pill sev MEDIUM'>MEDIUM</span></td><td class='mono'><a href="https://avd.aquasec.com/nvd/cve-2025-0004">CVE-2025-0004</a></td><td>busybox</td><td class='mono'>1.0</td><td class='mono'>â€”</td><td>CVE-2025-0004 title</td></tr></table>
+</section><section class="card"><h2>Deployment</h2><dl class="kv"><dt>Status</dt><dd><span class="pill ROLLED_BACK">ROLLED_BACK</span></dd><dt>Target</dt><dd>lab-target</dd><dt>New release</dt><dd><span class="mono">{&quot;backend&quot;: &quot;12-a1b2c3d4-chaos-crash&quot;, &quot;frontend&quot;: &quot;12-a1b2c3d4&quot;}</span></dd><dt>Previous release</dt><dd><span class="mono">{&quot;backend&quot;: &quot;11-9f8e7d6c&quot;, &quot;frontend&quot;: &quot;11-9f8e7d6c&quot;}</span></dd><dt>Health check</dt><dd><span class="pill FAIL">FAIL</span> HTTP 502 from /health Â· 50 attempts Â· 150s</dd><dt>Version served</dt><dd><span class="mono">â€“</span></dd><dt>Rollback</dt><dd><span class="pill ROLLED_BACK">ROLLED_BACK</span> restored {&quot;backend&quot;: &quot;11-9f8e7d6c&quot;, &quot;frontend&quot;: &quot;11-9f8e7d6c&quot;}</dd><dt>DB backup</dt><dd>/opt/secureship/backups/pre-12-a1b2c3d4-chaos-crash-20261102T101900Z.sql.gz</dd><dt>Chaos mode</dt><dd>crash</dd><dt>Duration</dt><dd>171s</dd></dl></section><section class="card"><h2>Tamper-evident ledger</h2><dl class="kv"><dt>Entry</dt><dd>#3</dd><dt>Evidence SHA-256</dt><dd><span class="mono">911a165bfcb5645d37694a15bef5fff7d213e08b8b64facd0f82035b2d4f6d85</span></dd><dt>Entry hash</dt><dd><span class="mono">fd91e0af914907cd23cc5b4f028e85c4b0529f488dee017dfb38505e173230da</span></dd><dt>Previous hash</dt><dd><span class="mono">8c21d01859d12bf275349bb2b0dcf819e21c0daf31e8479d0294a9fe4b7d06a3</span></dd><dt>Signed (HMAC)</dt><dd>yes</dd><dt>Chain verification</dt><dd><span class="pill PASS">PASS</span></dd><dt>External anchors</dt><dd><span class="pill PASS">PASS</span> 2 anchor(s) from deploy-server, git match; previous entries anchored through #2. This entry&#x27;s anchor is written right after this report.</dd></dl></section><section class="card"><h2>Release history</h2><table><tr><th>Ledger</th><th>Build</th><th>Tag</th><th>Gate</th><th>Deploy</th><th>Risk</th><th>UTC</th></tr><tr><td>#3</td><td>12</td><td class='mono'>12-a1b2c3d4</td><td><span class="pill PASS">PASS</span></td><td><span class="pill ROLLED_BACK">ROLLED_BACK</span></td><td>3.6</td><td class='mono'>2026-11-02 14:14:32</td></tr><tr><td>#2</td><td>11</td><td class='mono'>11-9f8e7d6c</td><td><span class="pill PASS">PASS</span></td><td><span class="pill DEPLOYED">DEPLOYED</span></td><td>4.2</td><td class='mono'>2026-11-02 14:14:32</td></tr><tr><td>#1</td><td>10</td><td class='mono'>10-9f8e7d6c</td><td><span class="pill PASS">PASS</span></td><td><span class="pill DEPLOYED">DEPLOYED</span></td><td>4.2</td><td class='mono'>2026-11-02 14:14:32</td></tr></table></section>
+<footer>Generated by SecureShip. evidence.json is hashed into the deployment ledger; verify with
+<span class="mono">python3 -m secureship ledger verify --evidence reports/evidence.json</span>.</footer>
+</div></body></html>

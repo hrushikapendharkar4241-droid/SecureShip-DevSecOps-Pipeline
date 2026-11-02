@@ -1,0 +1,61 @@
+# ShopPilot runtime stack on the deployment target (lab-target, a Linux VM or AWS EC2).
+# Driven by scripts/remote/release.sh – image tags come from BACKEND_TAG / FRONTEND_TAG,
+# secrets come from ../.env on the server (never from Git or the image).
+
+name: shoppilot
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [data]
+    # No `ports:` on purpose – PostgreSQL is reachable only from the backend container.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    security_opt: ["no-new-privileges:true"]
+
+  backend:
+    image: ${BACKEND_IMAGE:-shoppilot-backend}:${BACKEND_TAG:?BACKEND_TAG must be set}
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      APP_VERSION: ${BACKEND_TAG}      # /health reports this so the deploy can prove the NEW version is serving
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - easyocr-models:/home/app/.EasyOCR
+      - app-data:${APP_DATA_PATH:-/srv/app/data}
+    networks: [data, web]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    pids_limit: 512
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-shoppilot-frontend}:${FRONTEND_TAG:?FRONTEND_TAG must be set}
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://backend:8000/}   # trailing slash strips /api (ShopPilot routes have no prefix)
+    depends_on: [backend]
+    ports:
+      # PUBLIC_BIND=127.0.0.1 when the app is published through Cloudflare Tunnel (no open port)
+      - "${PUBLIC_BIND:-0.0.0.0}:${PUBLIC_PORT:-8080}:8080"
+    networks: [web]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+
+networks:
+  data:
+    internal: true    # database network has no route to the outside world
+  web: {}
+
+volumes:
+  pgdata:
+  easyocr-models:
+  app-data:

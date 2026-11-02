@@ -1,0 +1,74 @@
+# syntax=docker/dockerfile:1
+# ShopPilot FastAPI backend – hardened multi-stage image
+# Build context: the SecureShip workspace root (ShopPilot is checked out into ./app)
+#
+#   builder  – compiles/installs Python deps into a venv (has compilers, never shipped)
+#   runtime  – slim image, non-root user, no build tools, no tests     <- deployed
+#   test     – runtime + pytest; the pipeline runs tests INSIDE the exact artifact it ships
+
+# ShopPilot runs on Python 3.12
+ARG PYTHON_VERSION=3.12
+
+FROM python:${PYTHON_VERSION}-slim AS builder
+ARG BACKEND_DIR=app/backend
+ARG TORCH_CPU_ONLY=true
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential libpq-dev \
+ && rm -rf /var/lib/apt/lists/*
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+WORKDIR /build
+COPY ${BACKEND_DIR}/requirements*.txt /tmp/req/
+# EasyOCR pulls PyTorch. The default wheel bundles CUDA (~2.5 GB of GPU libraries a
+# CPU server never uses). ShopPilot's requirements.txt already pins the CPU build
+# (torch==…+cpu via the PyTorch CPU index). For a project that doesn't, install the
+# CPU wheel first so the GPU build is never pulled in.
+RUN if [ "$TORCH_CPU_ONLY" = "true" ] && grep -qiE '^(easyocr|torch)' /tmp/req/requirements.txt \
+       && ! grep -q 'download.pytorch.org/whl/cpu' /tmp/req/requirements.txt; then \
+      pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision; \
+    fi \
+ && pip install -r /tmp/req/requirements.txt
+
+FROM python:${PYTHON_VERSION}-slim AS runtime
+ARG BACKEND_DIR=app/backend
+ARG APP_VERSION=dev
+# Pull in Debian security fixes released after the base image was built.
+# fonts-dejavu-core: ShopPilot's invoice/report PDFs need a font with the ₹ sign
+# (app/services/pdf_brand.py looks for DejaVu on Linux).
+RUN apt-get update \
+ && apt-get upgrade -y \
+ && apt-get install -y --no-install-recommends libpq5 libglib2.0-0 fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 10001 --shell /usr/sbin/nologin app \
+ && mkdir -p /srv/app/data /home/app/.EasyOCR \
+ && chown -R app:app /srv/app /home/app
+COPY --from=builder /opt/venv /opt/venv
+WORKDIR /srv/app
+COPY --chown=10001:10001 ${BACKEND_DIR}/ .
+RUN rm -rf ./tests ./test ./.pytest_cache
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    APP_MODULE=app.main:app \
+    PORT=8000 \
+    WEB_CONCURRENCY=2 \
+    APP_VERSION=${APP_VERSION}
+USER 10001
+EXPOSE 8000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=4 \
+  CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"]
+CMD ["sh", "-c", "exec uvicorn \"$APP_MODULE\" --host 0.0.0.0 --port \"$PORT\" --workers \"$WEB_CONCURRENCY\" --proxy-headers"]
+
+FROM runtime AS test
+ARG BACKEND_DIR=app/backend
+USER root
+COPY --from=builder /tmp/req/ /tmp/req/
+# requirements-dev.txt pins the project's own pytest/httpx versions; pytest-cov is added for coverage
+RUN if [ -f /tmp/req/requirements-dev.txt ]; then pip install --no-cache-dir -r /tmp/req/requirements-dev.txt; \
+    else pip install --no-cache-dir pytest httpx; fi \
+ && pip install --no-cache-dir pytest-cov
+COPY --chown=10001:10001 ${BACKEND_DIR}/ .
+ENV TESTING=1
+USER 10001
+CMD ["python", "-m", "pytest", "-q"]

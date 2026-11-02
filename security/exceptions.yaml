@@ -1,0 +1,30 @@
+# SecureShip risk acceptances
+# ------------------------------------------------------------------
+# A finding listed here does not block the release while the acceptance is valid.
+# Rules enforced by the gate (see security/policy.yaml -> exceptions):
+#   * id, reason, owner and expires are mandatory
+#   * created -> expires must not exceed max_days (90)
+#   * after `expires` the acceptance stops working automatically and the
+#     finding blocks the pipeline again – nothing is ignored forever
+#
+# type: vulnerability (CVE / GHSA id from Trivy)
+#       misconfiguration (Trivy AVD id, e.g. AVD-DS-0026)
+#       secret (Gitleaks fingerprint)
+# Optional filters: package (vulnerability), image (backend | frontend)
+#
+# Example – uncomment and edit (keep reasons specific and honest):
+#
+# exceptions:
+#   - id: CVE-2024-00000
+#     type: vulnerability
+#     package: libexample
+#     image: backend
+#     reason: >-
+#       Unfixable in Debian bookworm base image; vulnerable code path (XML parsing)
+#       is not used by ShopPilot. Re-check when bookworm ships a fix.
+#     owner: Hrushika Pendharkar
+#     created: 2026-11-02
+#     expires: 2026-12-31
+#     ticket: SEC-12
+
+exceptions: []

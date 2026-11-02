@@ -1,0 +1,27 @@
+# Build context is the workspace root; keep secrets, history and junk out of images
+**/.git
+**/.github
+**/node_modules
+**/dist
+**/build
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.venv
+**/venv
+**/.env
+**/.env.*
+!**/.env.example
+**/*.db
+**/*.sqlite3
+**/*.log
+**/.DS_Store
+**/.idea
+**/.vscode
+reports
+ci
+docs
+tests
+architecture
+secureship

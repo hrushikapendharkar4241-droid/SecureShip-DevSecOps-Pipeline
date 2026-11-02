@@ -1,0 +1,74 @@
+# Jenkins Configuration-as-Code. Values like ${SONAR_TOKEN} come from ci/.env (never committed).
+jenkins:
+  systemMessage: "SecureShip – security-gated CI/CD for ShopPilot"
+  numExecutors: 2
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: APP_REPO_URL
+            value: "${APP_REPO_URL}"
+          - key: APP_GIT_CREDENTIALS_ID
+            value: "${APP_GIT_CREDENTIALS_ID:-}"
+          - key: LEDGER_PATH
+            value: "/var/jenkins_home/secureship/ledger.jsonl"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: deploy-ssh-key
+              username: deploy
+              description: "SSH key used to deploy ShopPilot to the target server"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${readFile:/run/secrets/deploy_key}"
+          - string:
+              scope: GLOBAL
+              id: sonar-token
+              description: "SonarQube analysis token"
+              secret: "${SONAR_TOKEN}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: shoppilot-git
+              description: "Read-only GitHub token (Contents: read) for the private ShopPilot repository"
+              username: "${APP_GIT_USER:-git}"
+              password: "${APP_GIT_TOKEN:-not-set}"
+          - string:
+              scope: GLOBAL
+              id: ledger-hmac-key
+              description: "HMAC key that signs the tamper-evident deployment ledger"
+              secret: "${LEDGER_HMAC_KEY}"
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+
+jobs:
+  - script: >
+      pipelineJob('SecureShip') {
+        description('Security-gated CI/CD pipeline: test → SonarQube → Trivy → policy gate → deploy → health check → auto-rollback → evidence')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote { url('${SECURESHIP_REPO_URL}') }
+                branch('*/${SECURESHIP_BRANCH}')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }

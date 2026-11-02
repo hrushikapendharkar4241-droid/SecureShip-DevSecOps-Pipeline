@@ -1,0 +1,17 @@
+# Hardened sshd for the lab target – key-only, no root, only the deploy user
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+AllowUsers deploy
+X11Forwarding no
+AllowTcpForwarding no
+MaxAuthTries 3
+LoginGraceTime 20
+ClientAliveInterval 60
+Subsystem sftp internal-sftp

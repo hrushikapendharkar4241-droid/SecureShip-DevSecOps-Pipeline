@@ -1,0 +1,5 @@
+# Keep Unix line endings for scripts even when committed from Windows (CRLF breaks bash)
+* text=auto eol=lf
+*.sh text eol=lf
+Jenkinsfile text eol=lf
+*.png binary

@@ -1,0 +1,54 @@
+# SecureShip release policy (policy-as-code)
+# ------------------------------------------------------------------
+# Every pipeline run is evaluated against this file by `python3 -m secureship gate`.
+# ANY check with result FAIL blocks deployment. Change this file through a pull
+# request so every policy change is reviewed and versioned in Git.
+#
+# Fail-closed principle: if a required tool did not produce evidence (crashed,
+# timed out, not configured) the check FAILS. "No report" never means "no problems".
+
+version: 3
+
+# Images built by the pipeline (reports/trivy-<name>.json must exist for each)
+images: [backend, frontend]
+
+tests:
+  required: true          # no test results => FAIL
+  max_failures: 0         # failing + erroring tests allowed
+  min_coverage: 0         # % line coverage required (raise once ShopPilot has more tests, e.g. 60)
+
+sonar:
+  required: true          # SonarQube quality gate must be evaluated and be OK
+
+secrets:
+  required: true
+  max_findings: 0         # any hard-coded secret in the Git history blocks the release
+
+vulnerabilities:
+  # Trivy image scan thresholds, per image.
+  # only_fixable: true  => count only findings that already have a patched version.
+  #   Rationale: an unfixable HIGH in a base OS package cannot be fixed by the team today;
+  #   it still raises the risk score and is listed in the evidence report.
+  block:
+    CRITICAL: { max: 0, only_fixable: false }   # every CRITICAL blocks (fixable or not)
+    HIGH:     { max: 0, only_fixable: true }    # fixable HIGH blocks
+
+misconfiguration:
+  required: true
+  block_severities: [CRITICAL, HIGH]           # Trivy Dockerfile checks (e.g. running as root)
+
+image:
+  require_non_root: true  # final image USER must not be root
+  max_size_mb: 3000       # warn when an image grows unexpectedly (EasyOCR/PyTorch is large)
+  size_blocking: false
+
+exceptions:
+  max_days: 90            # a risk acceptance may last at most 90 days
+  warn_days: 14           # warn when an acceptance is about to expire
+
+risk_score:
+  # Residual risk shown on every report (0-100). Unfixable findings weigh half.
+  weights: { CRITICAL: 10, HIGH: 4, MEDIUM: 1, LOW: 0.2, UNKNOWN: 0.2 }
+  unfixable_multiplier: 0.5
+  misconfig_weight: 2
+  block_above: null       # set e.g. 60 to also block on accumulated medium/low risk

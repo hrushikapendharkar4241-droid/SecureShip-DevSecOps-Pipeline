@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+# ShopPilot React frontend – built with Node, served by unprivileged NGINX
+# Build context: the SecureShip workspace root (ShopPilot is checked out into ./app)
+
+# Node 22 LTS (Node 20 reached end-of-life in April 2026; Vite 8 needs ≥ 20.19)
+FROM node:22-alpine AS build
+ARG FRONTEND_DIR=app/frontend
+ARG BUILD_DIR=dist
+ARG API_URL=/api
+WORKDIR /src
+COPY ${FRONTEND_DIR}/package*.json ./
+RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+COPY ${FRONTEND_DIR}/ .
+# Same-origin API calls through NGINX: no CORS, no backend port exposed to the internet.
+# ShopPilot's frontend reads VITE_API_URL (same convention as app/serve.py: website + API under /api).
+ENV VITE_API_URL=${API_URL} VITE_API_BASE_URL=${API_URL} REACT_APP_API_URL=${API_URL}
+RUN npm run build \
+ && mkdir -p /out \
+ && cp -r "${BUILD_DIR}"/. /out/
+
+FROM nginxinc/nginx-unprivileged:stable-alpine AS runtime
+# NGINX renders /etc/nginx/templates/*.template with envsubst at start-up (API_UPSTREAM)
+COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /out /usr/share/nginx/html
+ENV API_UPSTREAM=http://backend:8000/
+USER 101
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=4s --start-period=10s --retries=3 \
+  CMD ["wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
