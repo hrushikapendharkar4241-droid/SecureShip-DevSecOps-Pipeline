@@ -24,7 +24,9 @@ ARG GITLEAKS_VERSION=v8.21.2
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Checksum-database verification must stay ON: refuse to build if anything disables it.
 # hadolint ignore=DL3064
-ENV CGO_ENABLED=0 GOTOOLCHAIN=auto GOFLAGS=-trimpath GOSUMDB=sum.golang.org GONOSUMDB="" GOPRIVATE="" GOINSECURE=""
+# GOEXPERIMENT=jsonv2: Trivy uses encoding/json/v2, as in its own release builds (.goreleaser.yml)
+ENV CGO_ENABLED=0 GOTOOLCHAIN=auto GOFLAGS=-trimpath GOSUMDB=sum.golang.org GONOSUMDB="" GOPRIVATE="" GOINSECURE="" \
+    GOEXPERIMENT=jsonv2
 WORKDIR /src
 # hadolint ignore=DL3003,SC3043
 RUN set -eux; \
