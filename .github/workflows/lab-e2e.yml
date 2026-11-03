@@ -40,6 +40,9 @@ jobs:
   lab:
     runs-on: ubuntu-24.04
     timeout-minutes: 345
+    defaults:
+      run:
+        shell: bash   # explicit: bash -eo pipefail, so `bootstrap.sh | tee` still fails the step
     env:
       APP_GIT_TOKEN: ${{ secrets.SHOPPILOT_TOKEN }}
       RESULTS: ${{ github.workspace }}/lab-results-out
@@ -52,6 +55,21 @@ jobs:
             echo "::error::Add the repository secret SHOPPILOT_TOKEN (Settings → Secrets and variables → Actions): a fine-grained token with Contents: Read-only on shoppilot"
             exit 1
           fi
+          # A pasted secret can carry spaces or a trailing newline – keep only token characters
+          tok="$(printf '%s' "$APP_GIT_TOKEN" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
+          echo "::add-mask::$tok"
+          echo "APP_GIT_TOKEN=$tok" >> "$GITHUB_ENV"
+          case "$tok" in github_pat_*|ghp_*) prefix=ok ;; *) prefix="unexpected (should start with github_pat_)" ;; esac
+          api() { curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $tok" "https://api.github.com/$1"; }
+          user="$(api user)"; repo="$(api repos/hrushikapendharkar4241-droid/shoppilot)"
+          # Only the length, the prefix check and GitHub's answers are printed – never the token
+          echo "::notice title=Token check::${#tok} characters (removed $(( ${#APP_GIT_TOKEN} - ${#tok} )) stray), prefix $prefix, GitHub /user → $user, shoppilot repo → $repo"
+          case "$repo" in
+            200) ;;
+            401) echo "::error::GitHub rejected SHOPPILOT_TOKEN as invalid or expired (401). Create a new fine-grained token and update the secret."; exit 1 ;;
+            403|404) echo "::error::SHOPPILOT_TOKEN is valid but cannot see shoppilot ($repo). Edit the token: Repository access → Only select repositories → shoppilot, Permissions → Contents: Read-only."; exit 1 ;;
+            *) echo "::error::Unexpected answer from GitHub ($repo)"; exit 1 ;;
+          esac
 
       - name: Make room on the runner
         run: |

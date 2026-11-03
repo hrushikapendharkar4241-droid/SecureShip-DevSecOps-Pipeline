@@ -96,7 +96,7 @@ else
 fi
 
 # With a token configured (private repo), clone the way Jenkins will: token in a header, never in the URL
-app_token="$(env_or_default APP_GIT_TOKEN "")"
+app_token="$(env_or_default APP_GIT_TOKEN "" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
 clone_auth=()
 if [ -n "$app_token" ]; then
   app_owner="$(printf '%s' "$app_repo" | sed -E 's#https://github.com/([^/]+)/.*#\1#')"
