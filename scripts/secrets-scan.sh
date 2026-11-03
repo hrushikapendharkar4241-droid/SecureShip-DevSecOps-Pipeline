@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Scan the full ShopPilot Git history for hard-coded secrets (API keys, tokens, passwords).
+# Scan the full Git history of the ShopPilot branch being released for hard-coded secrets
+# (API keys, tokens, passwords). Scoped to HEAD: Jenkins fetches every branch, and a demo or
+# feature branch must not block a release that doesn't contain its commits.
 # Findings are recorded, the policy gate decides whether they block the release.
 # shellcheck source=scripts/lib.sh
 source "$(dirname "$0")/lib.sh"
@@ -10,9 +12,9 @@ if ! command -v gitleaks >/dev/null 2>&1; then
   die "gitleaks is not installed"
 fi
 
-log "Gitleaks: scanning $(git -C "$APP_DIR" rev-list --count HEAD 2>/dev/null || echo '?') commits of ShopPilot history"
+log "Gitleaks: scanning all $(git -C "$APP_DIR" rev-list --count HEAD 2>/dev/null || echo '?') commits in the history of the release"
 set +e
-gitleaks detect --source "$APP_DIR" --report-format json --report-path "$out" \
+gitleaks detect --source "$APP_DIR" --log-opts="HEAD" --report-format json --report-path "$out" \
   --redact --no-banner --exit-code 0 --log-level warn
 rc=$?
 set -e

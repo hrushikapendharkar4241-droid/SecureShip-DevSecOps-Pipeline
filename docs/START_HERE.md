@@ -121,7 +121,7 @@ If a stage fails, open the stage log. Then check the troubleshooting table in [S
 
 ## Step 7: Demo scenarios and screenshots
 
-Run them as written in [DEMO_SCENARIOS.md](DEMO_SCENARIOS.md):
+**Fastest:** `./ci/demo.sh all ~/SareeERP-Pro` runs scenarios 1–6 one after another, unattended (~1.5–2 h), and writes `demo-evidence/SUMMARY.md`. Or run them one at a time as written in [DEMO_SCENARIOS.md](DEMO_SCENARIOS.md).
 
 | # | Scenario | Screenshot |
 |---|---|---|

@@ -25,3 +25,7 @@ venv/
 .idea/
 .vscode/
 .DS_Store
+
+# demo evidence: keep only the HTML reports
+demo-evidence/*/*
+!demo-evidence/*/evidence.html

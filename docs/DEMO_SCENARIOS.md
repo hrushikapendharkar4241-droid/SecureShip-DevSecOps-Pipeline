@@ -4,6 +4,16 @@ Run these after the first successful build. Each one takes a few minutes and pro
 
 > Tip: do the "bad" scenarios on a throw-away ShopPilot branch (for example `demo/broken`) and set `APP_BRANCH` to it. Your `main` branch and its history stay clean.
 
+**Shortcut: `ci/demo.sh` does the manual steps below for you** (Git Bash, from the repo root):
+
+| Command | Does |
+|---|---|
+| `./ci/demo.sh all ~/SareeERP-Pro` | **everything below, unattended (~1.5–2 h)**: two clean releases, both chaos rollbacks, the three blocked builds, a final clean release, then the tamper demo. Results go to `demo-evidence/SUMMARY.md` and one folder per build. Stops after the first build if that one doesn't deploy. |
+| `./ci/demo.sh branches ~/SareeERP-Pro` | creates and pushes `demo/vulnerable-dep`, `demo/failing-test` and `demo/leaked-secret` (scenarios 2–4) from ShopPilot's `master`, without touching your working folder |
+| `./ci/demo.sh tamper` | scenario 6 A + B: edits an old entry, then deletes the two newest, shows what each check reports, and restores the ledger |
+| `./ci/demo.sh append-only` | scenario 6, second part: the deploy user tries to wipe or delete the anchor file |
+| `./ci/demo.sh evidence 7` | copies build #7's reports to `demo-evidence/7/` so you can open `evidence.html` locally |
+
 ---
 
 ## 1. Clean release → DEPLOYED
@@ -55,7 +65,7 @@ python3 -c "import secrets,string; print('GITHUB_TOKEN = \"ghp_' + ''.join(secre
 
 **Expect:** the gate fails with `Secret scanning: 1 hard-coded secret(s) found: github-pat`. The value is redacted in all reports.
 
-*Talking point:* Gitleaks scans the **entire history**. Deleting the file in a later commit does not remove the finding. The real fix is to rotate the credential.
+*Talking point:* Gitleaks scans the **entire history** of the branch being released (not just the latest commit). Deleting the file in a later commit does not remove the finding. The real fix is to rotate the credential.
 
 ## 5. Broken release → automatic rollback (the highlight)
 

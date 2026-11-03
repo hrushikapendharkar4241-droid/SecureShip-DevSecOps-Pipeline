@@ -82,11 +82,18 @@ if [ -z "$(get_env APP_GIT_TOKEN)" ]; then
       Permissions       : Repository permissions → Contents → Read-only   (nothing else)
       Expiration        : 90 days
 EOT
-      read -rsp "  Paste the token here (input is hidden, Enter to skip): " tok; echo
+      read -rsp "  Paste the token here (input is hidden, Enter to skip): " tok || true; echo
     fi
+    # Pasting in a Windows terminal can add spaces, CR or invisible characters – keep only token characters
+    tok="$(printf '%s' "$tok" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
     if [ -n "$tok" ]; then
-      token_git "$owner" "$tok" ls-remote --heads "$app_repo" >/dev/null 2>&1 \
-        || fail "GitHub rejected the token for $app_repo – check it has Contents: Read-only on that repository"
+      case "$tok" in github_pat_*|ghp_*) ;; *)
+        fail "That doesn't look like a GitHub token (it should start with github_pat_). Copy it again and rerun ./ci/bootstrap.sh";;
+      esac
+      echo "  Checking the token with GitHub (${#tok} characters, starts with ${tok:0:11}…)"
+      if ! token_git "$owner" "$tok" ls-remote --heads "$app_repo" >/dev/null 2>&1; then
+        fail "GitHub rejected the token for $app_repo. Check on GitHub → Fine-grained tokens that it is not expired, Resource owner = $owner, Repository access includes 'shoppilot', and Contents = Read-only. Then rerun ./ci/bootstrap.sh"
+      fi
       set_env APP_GIT_USER "$owner"
       set_env APP_GIT_TOKEN "$tok"
       set_env APP_GIT_CREDENTIALS_ID shoppilot-git
