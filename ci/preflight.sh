@@ -104,7 +104,7 @@ if [ -n "$app_token" ]; then
   clone_auth=(-c credential.helper= -c "http.extraHeader=Authorization: Basic $(printf '%s:%s' "$app_owner" "$app_token" | base64 | tr -d '\n')")
 fi
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-if GIT_TERMINAL_PROMPT=0 git "${clone_auth[@]}" clone -q --depth 1 --branch "$app_branch" "$app_repo" "$tmp/app" 2>/dev/null; then
+if GIT_TERMINAL_PROMPT=0 git "${clone_auth[@]}" clone -q --depth 1 --branch "$app_branch" "$app_repo" "$tmp/app" 2>"$tmp/clone.err"; then
   pass "ShopPilot repo reachable: $app_repo ($app_branch)"
   # The deploy health check needs GET /health – without it EVERY deployment fails and rolls back
   if grep -rqs --include='*.py' -E '@router\.get\("/health"' "$tmp/app/backend/app" \
@@ -120,7 +120,7 @@ if GIT_TERMINAL_PROMPT=0 git "${clone_auth[@]}" clone -q --depth 1 --branch "$ap
   fi
 else
   if [ -n "$app_token" ]; then
-    fail "ShopPilot repo/branch not reachable with the configured token: $app_repo ($app_branch) – check the token (Contents: Read-only on shoppilot)"
+    fail "ShopPilot repo/branch not reachable with the configured token: $app_repo ($app_branch) – check the token (Contents: Read-only on shoppilot). git said: $(tail -n 2 "$tmp/clone.err" | tr '\n' ' ')"
   else
     warn "ShopPilot could not be cloned without a token – bootstrap.sh will ask for one; the /health and layout checks run once it is set"
   fi
