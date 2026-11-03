@@ -85,7 +85,7 @@ EOT
       read -rsp "  Paste the token here (input is hidden, Enter to skip): " tok || true; echo
     fi
     # Pasting in a Windows terminal can add spaces, CR or invisible characters – keep only token characters
-    tok="$(printf '%s' "$tok" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
+    tok="$(printf '%s' "$tok" | LC_ALL=C tr -cd '[:graph:]')"
     if [ -n "$tok" ]; then
       # ghs_ = a GitHub Actions job token (CI); username x-access-token is what GitHub expects for it
       case "$tok" in ghs_*) owner=x-access-token ;; esac

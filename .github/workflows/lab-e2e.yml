@@ -48,7 +48,7 @@ jobs:
             exit 1
           fi
           # A pasted secret can carry spaces or a trailing newline – keep only token characters
-          tok="$(printf '%s' "$APP_GIT_TOKEN" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
+          tok="$(printf '%s' "$APP_GIT_TOKEN" | LC_ALL=C tr -cd '[:graph:]')"
           echo "::add-mask::$tok"
           echo "APP_GIT_TOKEN=$tok" >> "$GITHUB_ENV"
           case "$tok" in github_pat_*|ghp_*) prefix=ok ;; *) prefix="unexpected (should start with github_pat_)" ;; esac
