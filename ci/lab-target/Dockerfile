@@ -3,7 +3,10 @@
 # with a key, ships images, runs docker compose, health-checks and rolls back.
 FROM docker:27-dind
 
-RUN apk add --no-cache openssh-server bash curl jq tar gzip coreutils e2fsprogs-extra \
+# Upgrade the base image first: it can ship an older openssh-client that conflicts with the
+# newest openssh-server (and upgrading also picks up security fixes)
+RUN apk upgrade --no-cache \
+ && apk add --no-cache openssh-server bash curl jq tar gzip coreutils e2fsprogs-extra \
  && (docker compose version >/dev/null 2>&1 || apk add --no-cache docker-cli-compose) \
  && (getent group docker >/dev/null || addgroup -S docker) \
  && adduser -D -s /bin/bash deploy \
