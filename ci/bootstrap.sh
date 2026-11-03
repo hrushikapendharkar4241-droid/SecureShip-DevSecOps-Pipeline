@@ -17,7 +17,11 @@ SONAR_URL="http://localhost:9000"
 
 say()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
-rand() { LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${1:-32}"; }
+rand() {  # random [A-Za-z0-9] string; no endless pipe, so no "Broken pipe" noise under pipefail
+  local s=""
+  while [ ${#s} -lt "${1:-32}" ]; do s+="$(head -c 64 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9')"; done
+  printf '%s' "${s:0:${1:-32}}"
+}
 set_env() {  # set_env KEY VALUE  (portable in-place edit)
   local tmp; tmp="$(mktemp)"
   grep -v "^$1=" "$ENV_FILE" > "$tmp" || true
