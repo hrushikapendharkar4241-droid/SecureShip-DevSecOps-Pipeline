@@ -30,6 +30,28 @@ for c in secureship-jenkins secureship-sonarqube secureship-lab-target; do
   docker logs --tail 200 "$c" > "$R/logs-$c.txt" 2>&1 || true
 done
 
+# Annotations: readable through the checks API, so problems can be diagnosed without the raw log
+annotate() {  # annotate <level> <title> <file> <lines>
+  local body; body="$(tail -n "$4" "$3" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | sed -e 's/%/%25/g' | sed -e ':a;N;$!ba;s/\n/%0A/g')"
+  [ -n "$body" ] && echo "::$1 title=$2::$body"
+}
+if [ -f "$R/bootstrap.log" ] && ! grep -q "SecureShip lab is running" "$R/bootstrap.log"; then
+  annotate error "bootstrap failed" "$R/bootstrap.log" 40
+  annotate warning "jenkins log" "$R/logs-secureship-jenkins.txt" 30
+fi
+for d in "$R"/builds/*/; do
+  [ -d "$d" ] || continue
+  n="$(basename "$d")"
+  if [ -f "$d/gate.json" ] && [ "$(jq -r .decision "$d/gate.json" 2>/dev/null)" = FAIL ]; then
+    echo "::warning title=Build $n gate FAIL::$(jq -r '[.blocking_reasons[]? | tostring] | join(" | ")' "$d/gate.json" | cut -c1-3000)"
+  fi
+  if ! [ -f "$d/evidence.json" ] || [ "$(jq -r .deployment.status "$d/evidence.json" 2>/dev/null)" = NOT_REACHED ]; then
+    annotate warning "Build $n console (end)" "$d/console-tail.txt" 45
+  elif [ "$(jq -r .deployment.status "$d/evidence.json")" = ROLLED_BACK ] || [ "$(jq -r .deployment.status "$d/evidence.json")" = FAILED ]; then
+    annotate notice "Build $n console (end)" "$d/console-tail.txt" 30
+  fi
+done
+
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   if [ -f "$R/SUMMARY.md" ]; then cat "$R/SUMMARY.md" >> "$GITHUB_STEP_SUMMARY"
   else echo "No demo summary – the lab did not get that far. See diagnostics on the lab-results branch." >> "$GITHUB_STEP_SUMMARY"; fi

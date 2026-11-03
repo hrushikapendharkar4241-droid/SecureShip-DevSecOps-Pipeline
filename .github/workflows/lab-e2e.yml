@@ -44,7 +44,7 @@ jobs:
       APP_GIT_TOKEN: ${{ secrets.SHOPPILOT_TOKEN }}
       RESULTS: ${{ github.workspace }}/lab-results-out
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check the ShopPilot token secret
         run: |
@@ -74,7 +74,10 @@ jobs:
 
       - name: Pre-flight check + bootstrap (Jenkins, SonarQube, lab target)
         run: |
-          ./ci/bootstrap.sh 2>&1 | sed -E 's/(password: )[^ ]+/\1(in ci\/.env)/'
+          mkdir -p "$RESULTS"
+          ./ci/bootstrap.sh 2>&1 | sed -E 's/(password: )[^ ]+/\1(in ci\/.env)/' | tee "$RESULTS/bootstrap.log"
+          echo "::notice title=Lab is up::Jenkins, SonarQube and the lab target are running"
+
 
       - name: Run every demo scenario through the Jenkins pipeline
         id: demos
@@ -82,7 +85,7 @@ jobs:
         env:
           DEMO_BRANCHES: existing          # demo/* branches already exist on ShopPilot (this job can't push there)
           DEMO_ONLY_FIRST: ${{ inputs.scenarios == 'first' && '1' || '0' }}
-        run: ./ci/demo.sh all
+        run: ./ci/demo.sh all 2>&1 | tee "$RESULTS/demo.log"
 
       - name: Screenshots (Jenkins, SonarQube, ShopPilot, evidence reports, tamper demo)
         if: always()

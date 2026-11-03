@@ -201,6 +201,8 @@ cmd_all() {
     printf '   #%s  result=%s  gate=%s  deployment=%s  (expected %s) %s\n' "$n" "$res" "$gate" "$dep" "$3" "$ok"
     echo "| $1 | #$n | $res | $gate | $dep | $3 | $ok |" >> "$sum"
     printf '%s\t%s\t%s\t%s\n' "${1%%.*}" "$n" "$dep" "$3" >> "$ROOT/demo-evidence/scenarios.tsv"
+    # On GitHub Actions: one annotation per scenario, readable while the run is going
+    [ -n "${GITHUB_ACTIONS:-}" ] && echo "::notice title=Scenario ${1%%.*}::build #$n result=$res gate=$gate deployment=$dep (expected $3) $ok"
     [ "$ok" = "✅" ]
   }
 
