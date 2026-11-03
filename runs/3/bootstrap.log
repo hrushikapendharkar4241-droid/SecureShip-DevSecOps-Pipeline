@@ -1,0 +1,24 @@
+
+ SecureShip pre-flight
+ ---------------------
+  [32mPASS[0m  docker found
+  [32mPASS[0m  git found
+  [32mPASS[0m  curl found
+  [32mPASS[0m  ssh-keygen found
+  [32mPASS[0m  Docker engine is running (28.0.4)
+  [32mPASS[0m  Docker Compose v2 available
+  [32mPASS[0m  Docker has 15 GB RAM
+  [32mPASS[0m  Docker has 4 CPUs
+  [32mPASS[0m  113 GB free on the drive with your home folder
+  [32mPASS[0m  port 8080 free (Jenkins)
+  [32mPASS[0m  port 9000 free (SonarQube)
+  [32mPASS[0m  port 8088 free (ShopPilot (deployed))
+  [32mPASS[0m  port 2222 free (lab SSH)
+  [32mPASS[0m  SecureShip repo reachable: https://github.com/hrushikapendharkar4241-droid/SecureShip-DevSecOps-Pipeline.git (main)
+  [32mPASS[0m  ShopPilot repo is private – a token is configured in ci/.env for Jenkins
+  [31mFAIL[0m  ShopPilot repo/branch not reachable with the configured token: https://github.com/hrushikapendharkar4241-droid/shoppilot.git (master) – check the token (Contents: Read-only on shoppilot)
+  [32mPASS[0m  scripts have Unix line endings
+ ---------------------
+ [31m1 problem(s)[0m, 0 warning(s) – fix the FAIL lines, then run this again.
+
+[1;31mERROR:[0m pre-flight check failed – fix the FAIL lines above (or SKIP_PREFLIGHT=1 to override)
