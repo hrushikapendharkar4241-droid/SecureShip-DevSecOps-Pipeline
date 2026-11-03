@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Push $RESULTS to the lab-results branch as runs/<run number>/ and update its index.
+# Push $RESULTS to the results branch ($RESULTS_BRANCH, default lab-results) of the repository
+# checked out in the current directory, as runs/<run number>/, and update its index.
 set -euo pipefail
 R="${RESULTS:?}"; N="${GITHUB_RUN_NUMBER:?}"; dir="${RUNNER_TEMP:-/tmp}/lab-results"
-status="${DEMOS_OUTCOME:-unknown}"
+status="${DEMOS_OUTCOME:-unknown}"; B="${RESULTS_BRANCH:-lab-results}"
 git config --global user.name "github-actions[bot]"
 git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-if git fetch -q --depth 1 origin +refs/heads/lab-results:refs/remotes/origin/lab-results 2>/dev/null; then
-  git worktree add -q -B lab-results "$dir" origin/lab-results
+if git fetch -q --depth 1 origin +refs/heads/$B:refs/remotes/origin/$B 2>/dev/null; then
+  git worktree add -q -B "$B" "$dir" "origin/$B"
 else
-  git worktree add -q --orphan -b lab-results "$dir"
+  git worktree add -q --orphan -b "$B" "$dir"
 fi
 rm -rf "${dir:?}/runs/$N"; mkdir -p "$dir/runs/$N"; cp -r "$R"/. "$dir/runs/$N/"
 [ -f "$dir/runs.tsv" ] || : > "$dir/runs.tsv"
@@ -30,5 +31,5 @@ sort -n "$dir/runs.tsv.new" > "$dir/runs.tsv"; rm "$dir/runs.tsv.new"
 } > "$dir/README.md"
 git -C "$dir" add -A
 git -C "$dir" commit -q -m "Lab run #$N on ${GITHUB_SHA:0:7}: $status" || { echo "nothing to publish"; exit 0; }
-git -C "$dir" push -q origin lab-results
-echo "Published runs/$N to the lab-results branch"
+git -C "$dir" push -q origin "$B"
+echo "Published runs/$N to the $B branch"

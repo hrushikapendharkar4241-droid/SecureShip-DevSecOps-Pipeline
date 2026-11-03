@@ -5,6 +5,9 @@
 # Jenkins pipeline. Evidence reports, screenshots and the summary are pushed to the
 # `lab-results` branch (runs/<run number>/).
 #
+# Started by hand (Actions → Lab end-to-end run → Run workflow). The same run is also set up
+# inside the ShopPilot repository (branch secureship-lab), where no personal token is needed.
+#
 # Needs one repository secret: SHOPPILOT_TOKEN – a fine-grained GitHub token with
 # Contents: Read-only on the private ShopPilot repository (the same token bootstrap.sh asks for).
 name: Lab end-to-end run
@@ -17,17 +20,6 @@ on:
         type: choice
         options: [all, first]
         default: all
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/lab-e2e.yml"
-      - ".github/lab/**"
-      - "ci/**"
-      - "scripts/**"
-      - "docker/**"
-      - "secureship/**"
-      - "security/**"
-      - "Jenkinsfile"
 
 permissions:
   contents: write   # push the results to the lab-results branch

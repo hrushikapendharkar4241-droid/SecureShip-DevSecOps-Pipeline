@@ -87,7 +87,9 @@ EOT
     # Pasting in a Windows terminal can add spaces, CR or invisible characters – keep only token characters
     tok="$(printf '%s' "$tok" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
     if [ -n "$tok" ]; then
-      case "$tok" in github_pat_*|ghp_*) ;; *)
+      # ghs_ = a GitHub Actions job token (CI); username x-access-token is what GitHub expects for it
+      case "$tok" in ghs_*) owner=x-access-token ;; esac
+      case "$tok" in github_pat_*|ghp_*|ghs_*) ;; *)
         fail "That doesn't look like a GitHub token (it should start with github_pat_). Copy it again and rerun ./ci/bootstrap.sh";;
       esac
       echo "  Checking the token with GitHub (${#tok} characters, starts with ${tok:0:11}…)"

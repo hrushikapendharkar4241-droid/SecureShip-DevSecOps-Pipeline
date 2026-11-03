@@ -100,6 +100,7 @@ app_token="$(env_or_default APP_GIT_TOKEN "" | LC_ALL=C tr -cd 'A-Za-z0-9_')"
 clone_auth=()
 if [ -n "$app_token" ]; then
   app_owner="$(printf '%s' "$app_repo" | sed -E 's#https://github.com/([^/]+)/.*#\1#')"
+  case "$app_token" in ghs_*) app_owner=x-access-token ;; esac   # GitHub Actions job token
   clone_auth=(-c credential.helper= -c "http.extraHeader=Authorization: Basic $(printf '%s:%s' "$app_owner" "$app_token" | base64 | tr -d '\n')")
 fi
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
