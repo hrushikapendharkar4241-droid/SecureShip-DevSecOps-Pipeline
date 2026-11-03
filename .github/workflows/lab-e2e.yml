@@ -1,0 +1,109 @@
+# End-to-end run of the SecureShip lab on a GitHub-hosted runner (free for public repositories).
+#
+# It does exactly what docs/START_HERE.md does on a laptop: ci/bootstrap.sh starts Jenkins,
+# SonarQube and the lab target, then ci/demo.sh runs every demo scenario through the real
+# Jenkins pipeline. Evidence reports, screenshots and the summary are pushed to the
+# `lab-results` branch (runs/<run number>/).
+#
+# Needs one repository secret: SHOPPILOT_TOKEN – a fine-grained GitHub token with
+# Contents: Read-only on the private ShopPilot repository (the same token bootstrap.sh asks for).
+name: Lab end-to-end run
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: "all = every demo scenario (~2 h); first = only the first clean release"
+        type: choice
+        options: [all, first]
+        default: all
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/lab-e2e.yml"
+      - ".github/lab/**"
+      - "ci/**"
+      - "scripts/**"
+      - "docker/**"
+      - "secureship/**"
+      - "security/**"
+      - "Jenkinsfile"
+
+permissions:
+  contents: write   # push the results to the lab-results branch
+
+concurrency:
+  group: lab-e2e
+  cancel-in-progress: true
+
+jobs:
+  lab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 345
+    env:
+      APP_GIT_TOKEN: ${{ secrets.SHOPPILOT_TOKEN }}
+      RESULTS: ${{ github.workspace }}/lab-results-out
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the ShopPilot token secret
+        run: |
+          if [ -z "$APP_GIT_TOKEN" ]; then
+            echo "::error::Add the repository secret SHOPPILOT_TOKEN (Settings → Secrets and variables → Actions): a fine-grained token with Contents: Read-only on shoppilot"
+            exit 1
+          fi
+
+      - name: Make room on the runner
+        run: |
+          df -h / /mnt || true
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift || true
+          docker image prune -af >/dev/null || true
+          # Docker's data on the bigger temporary disk, when the runner has one
+          avail_mnt="$(df -BG --output=avail /mnt 2>/dev/null | tail -1 | tr -dc 0-9)"
+          if [ "${avail_mnt:-0}" -gt 40 ]; then
+            sudo systemctl stop docker docker.socket
+            cfg=/etc/docker/daemon.json
+            if [ -s "$cfg" ]; then sudo jq '. + {"data-root": "/mnt/docker"}' "$cfg" | sudo tee "$cfg.new" >/dev/null && sudo mv "$cfg.new" "$cfg"
+            else echo '{"data-root": "/mnt/docker"}' | sudo tee "$cfg" >/dev/null; fi
+            sudo systemctl start docker
+          fi
+          sudo sysctl -w vm.max_map_count=524288 fs.file-max=131072
+          docker info --format 'Docker {{.ServerVersion}} · data {{.DockerRootDir}} · {{.NCPU}} CPUs · {{.MemTotal}} bytes RAM'
+          df -h / /mnt || true
+
+      - name: Pre-flight check + bootstrap (Jenkins, SonarQube, lab target)
+        run: |
+          ./ci/bootstrap.sh 2>&1 | sed -E 's/(password: )[^ ]+/\1(in ci\/.env)/'
+
+      - name: Run every demo scenario through the Jenkins pipeline
+        id: demos
+        continue-on-error: true
+        env:
+          DEMO_BRANCHES: existing          # demo/* branches already exist on ShopPilot (this job can't push there)
+          DEMO_ONLY_FIRST: ${{ inputs.scenarios == 'first' && '1' || '0' }}
+        run: ./ci/demo.sh all
+
+      - name: Screenshots (Jenkins, SonarQube, ShopPilot, evidence reports, tamper demo)
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p "$RESULTS/screenshots"
+          cd .github/lab && npm install --no-audit --no-fund --silent playwright@1.49.1 && npx playwright install --with-deps chromium >/dev/null
+          node screenshots.mjs "$GITHUB_WORKSPACE" "$RESULTS/screenshots"
+
+      - name: Collect evidence and diagnostics
+        if: always()
+        run: .github/lab/collect.sh
+
+      - name: Publish to the lab-results branch
+        if: always()
+        env:
+          DEMOS_OUTCOME: ${{ steps.demos.outcome }}
+        run: .github/lab/publish.sh
+
+      - name: Fail the job if a scenario did not behave as expected
+        if: steps.demos.outcome != 'success'
+        run: |
+          echo "::error::At least one scenario did not match its expected result – see the summary and the lab-results branch"
+          exit 1

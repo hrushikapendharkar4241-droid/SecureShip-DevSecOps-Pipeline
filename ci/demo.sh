@@ -177,6 +177,11 @@ cmd_all() {
   local repo="${1:-$HOME/SareeERP-Pro}" sum="$ROOT/demo-evidence/SUMMARY.md" n res gate dep ok all_ok=1
   running "$JENKINS" && running "$TARGET" || fail "the lab is not running – run ./ci/bootstrap.sh first"
   mkdir -p "$ROOT/demo-evidence"
+  # Jenkins answers /login before configuration-as-code has created the job
+  for _ in $(seq 1 60); do
+    docker exec "$JENKINS" sh -c 'curl -fsS -o /dev/null -u "$JENKINS_ADMIN_ID:$JENKINS_ADMIN_PASSWORD" http://localhost:8080/job/SecureShip/api/json' && break
+    sleep 5
+  done
   {
     echo "# SecureShip demo run – $(date '+%Y-%m-%d %H:%M')"
     echo
@@ -184,6 +189,7 @@ cmd_all() {
     echo "|---|---|---|---|---|---|---|"
   } > "$sum"
 
+  : > "$ROOT/demo-evidence/scenarios.tsv"
   run() {  # run <scenario> <params> <expected-deploy-status>
     say "Scenario: $1"
     if ! read -r n res gate dep < <(jenkins_build "$2"); then
@@ -194,20 +200,23 @@ cmd_all() {
     [ "$ok" = "✅" ] || all_ok=0
     printf '   #%s  result=%s  gate=%s  deployment=%s  (expected %s) %s\n' "$n" "$res" "$gate" "$dep" "$3" "$ok"
     echo "| $1 | #$n | $res | $gate | $dep | $3 | $ok |" >> "$sum"
+    printf '%s\t%s\t%s\t%s\n' "${1%%.*}" "$n" "$dep" "$3" >> "$ROOT/demo-evidence/scenarios.tsv"
     [ "$ok" = "✅" ]
   }
 
   if ! run "1. Clean release" "" DEPLOYED; then
     printf '\n\033[1;33mThe first clean release did not deploy – stopping here.\033[0m\n'
-    echo "  Reports for build #$n are in demo-evidence/$n/ (gate.json, console.txt). Send me that, or just tell me – I can read them."
+    echo "  Reports for build #${n:-?} are in demo-evidence/${n:-?}/ (gate.json, console.txt)."
     exit 1
   fi
+  [ "${DEMO_ONLY_FIRST:-0}" = 1 ] && { say "DEMO_ONLY_FIRST=1 – stopping after the first release"; cat "$sum"; return 0; }
   run "1b. Clean release (second, gives rollback a target)" "" DEPLOYED || true
   run "5. Chaos: backend crashes on start → automatic rollback" "CHAOS_MODE=crash" ROLLED_BACK || true
   run "5b. Chaos: /health lies → automatic rollback" "CHAOS_MODE=unhealthy" ROLLED_BACK || true
 
   say "Creating the demo branches in ShopPilot"
-  if cmd_branches "$repo"; then
+  # DEMO_BRANCHES=existing: the demo/* branches are already on GitHub (e.g. a CI run without push rights)
+  if [ "${DEMO_BRANCHES:-push}" = existing ] || cmd_branches "$repo"; then
     run "2. Vulnerable dependency (Jinja2 2.10)" "APP_BRANCH=demo/vulnerable-dep" BLOCKED_BY_GATE || true
     run "3. Failing unit test" "APP_BRANCH=demo/failing-test" BLOCKED_BY_GATE || true
     run "4. Hard-coded (fake) GitHub token" "APP_BRANCH=demo/leaked-secret" BLOCKED_BY_GATE || true
@@ -228,8 +237,8 @@ cmd_all() {
 
   say "Done"
   cat "$sum"
-  if [ "$all_ok" = 1 ]; then printf '\n\033[32mAll scenarios behaved as expected.\033[0m\n'; else printf '\n\033[33mSome scenarios did not match – see above.\033[0m\n'; fi
   echo "Open http://localhost:8088 (ShopPilot) and Jenkins' SecureShip page for the screenshots."
+  if [ "$all_ok" = 1 ]; then printf '\n\033[32mAll scenarios behaved as expected.\033[0m\n'; else printf '\n\033[33mSome scenarios did not match – see above.\033[0m\n'; return 1; fi
 }
 
 case "${1:-}" in

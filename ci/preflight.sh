@@ -95,8 +95,15 @@ else
   warn "ShopPilot repo is private (or unreachable without login) – bootstrap.sh will ask for a read-only GitHub token so Jenkins can clone it"
 fi
 
+# With a token configured (private repo), clone the way Jenkins will: token in a header, never in the URL
+app_token="$(env_or_default APP_GIT_TOKEN "")"
+clone_auth=()
+if [ -n "$app_token" ]; then
+  app_owner="$(printf '%s' "$app_repo" | sed -E 's#https://github.com/([^/]+)/.*#\1#')"
+  clone_auth=(-c credential.helper= -c "http.extraHeader=Authorization: Basic $(printf '%s:%s' "$app_owner" "$app_token" | base64 | tr -d '\n')")
+fi
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-if git clone -q --depth 1 --branch "$app_branch" "$app_repo" "$tmp/app" 2>/dev/null; then
+if GIT_TERMINAL_PROMPT=0 git "${clone_auth[@]}" clone -q --depth 1 --branch "$app_branch" "$app_repo" "$tmp/app" 2>/dev/null; then
   pass "ShopPilot repo reachable: $app_repo ($app_branch)"
   # The deploy health check needs GET /health – without it EVERY deployment fails and rolls back
   if grep -rqs --include='*.py' -E '@router\.get\("/health"' "$tmp/app/backend/app" \
@@ -111,7 +118,11 @@ if git clone -q --depth 1 --branch "$app_branch" "$app_repo" "$tmp/app" 2>/dev/n
     fail "ShopPilot layout differs – see docs/SHOPPILOT_INTEGRATION.md"
   fi
 else
-  fail "ShopPilot repo/branch not reachable: $app_repo ($app_branch). Private repo? Set up a Jenkins credential (docs/SETUP.md §1)"
+  if [ -n "$app_token" ]; then
+    fail "ShopPilot repo/branch not reachable with the configured token: $app_repo ($app_branch) – check the token (Contents: Read-only on shoppilot)"
+  else
+    warn "ShopPilot could not be cloned without a token – bootstrap.sh will ask for one; the /health and layout checks run once it is set"
+  fi
 fi
 
 # 6. line endings (Windows) ------------------------------------------------------------
